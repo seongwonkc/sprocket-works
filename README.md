@@ -49,7 +49,7 @@ Query params, so you don't have to play to a scene to look at it:
 |---|---|
 | `?scene=title\|warehouse\|build\|race` | start there |
 | `?parts=all` | own every part, four slots filled |
-| `?puzzle=balance\|circuit\|machines\|gears` | open that generator immediately |
+| `?scene=warehouse&puzzle=balance\|circuit\|machines\|gears` | auto-open that generator on spawn (the param is read by the warehouse, so `scene=warehouse` is required) |
 | `?seed=42` `?rank=0-7` `?race=0-4` | pin the run state |
 | `?ff=40` | advance 40 simulated seconds before the first frame |
 

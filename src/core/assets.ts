@@ -15,7 +15,7 @@ export type SpriteId =
   | 'warehouseBg' | 'workshopBg' | 'hubBg' | 'raceBg'
   | 'kidEast' | 'kidWest' | 'kidWalkEast' | 'kidWalkWest'
   | 'gremlinEast' | 'gremlinWest'
-  | 'crate' | 'crateOpen'
+  | 'crate'
   | 'bodyCrate' | 'bodyTub' | 'bodySkin' | 'bodyFrame'
   | 'noseSlab' | 'noseRound' | 'noseWedge' | 'noseNeedle'
   | 'wheelIron' | 'wheelRubber' | 'wheelBalloon' | 'wheelSlick'
@@ -33,7 +33,6 @@ const MANIFEST: Record<SpriteId, string> = {
   gremlinEast: 'gremlin_east.png',
   gremlinWest: 'gremlin_west.png',
   crate: 'crate.png',
-  crateOpen: 'crate_open.png',
   bodyCrate: 'body_crate.png',
   bodyTub: 'body_tub.png',
   bodySkin: 'body_skin.png',

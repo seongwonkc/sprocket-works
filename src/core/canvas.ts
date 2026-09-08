@@ -22,9 +22,9 @@ const MAX_H = 400;
  * How much of the shorter axis we'll waste before giving up on integer scaling.
  *
  * Integer scaling is what keeps pixels square, so it's the default. But a 390pt-wide portrait phone
- * computes a raw scale of 1.22, floors to 1, and renders a 390x180 postage stamp in the middle of an
- * 844pt screen. Above this threshold we take the fractional scale instead: on a 3x-DPR phone that's
- * ~3.65 device pixels per logical pixel, and the unevenness is invisible.
+ * has ~2.4 device pixels per logical pixel, and flooring that to 2 wastes a sixth of the screen.
+ * Above this threshold we take the fractional scale instead; at phone pixel densities the
+ * unevenness is invisible.
  */
 const WASTE_TOLERANCE = 0.15;
 
@@ -59,8 +59,12 @@ export class Screen {
   }
 
   private resize(): void {
-    const availW = Math.max(1, window.innerWidth);
-    const availH = Math.max(1, window.innerHeight);
+    // Scale is chosen in *device* pixels, not CSS pixels. A 390pt phone at 3x DPR has 1170 device
+    // pixels across — plenty for the 480px backbuffer — and deciding in CSS pixels would read that
+    // as a downscale and smear every 1px font stroke. Same story on 125%/150%-zoomed laptops.
+    const dpr = window.devicePixelRatio || 1;
+    const availW = Math.max(1, window.innerWidth) * dpr;
+    const availH = Math.max(1, window.innerHeight) * dpr;
 
     const rawScale = Math.min(availW / BASE_W, availH / BASE_H);
     const intScale = Math.max(1, Math.floor(rawScale));
@@ -81,8 +85,13 @@ export class Screen {
 
     this.canvas.width = w;
     this.canvas.height = h;
-    this.canvas.style.width = `${Math.round(w * scale)}px`;
-    this.canvas.style.height = `${Math.round(h * scale)}px`;
+    // Fractional CSS sizes are deliberate: (w * scale / dpr) CSS px is exactly w * scale device px,
+    // and rounding here would reintroduce a resample at the device-pixel boundary.
+    this.canvas.style.width = `${(w * scale) / dpr}px`;
+    this.canvas.style.height = `${(h * scale) / dpr}px`;
+    // Below 1x there is nothing crisp to preserve — nearest-neighbour drops whole strokes from the
+    // 1px font, so let the browser smooth instead. Only reachable on sub-480px 1x-DPR windows.
+    this.canvas.style.imageRendering = scale >= 1 ? '' : 'auto';
 
     this.ctx.imageSmoothingEnabled = false;
   }

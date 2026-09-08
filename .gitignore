@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.vite/
+.DS_Store
+*.local
+
+# --- Legal firewall: nothing derived from the DOS original may enter this repo ---
+# See DESIGN.md §3. Abandonware is not public domain.
+reference/
+*.dat
+*.DAT
+*.exe
+*.EXE
+*.ico
+ssg*
+gizmo*
+.tmp/

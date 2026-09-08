@@ -20,6 +20,7 @@ import { energyGen } from '../src/game/puzzles/energy';
 import { magnetsGen } from '../src/game/puzzles/magnets';
 import { forceGen, rangeOf } from '../src/game/puzzles/force';
 import { solve } from '../src/game/puzzles/circuitSolver';
+import { SOLID, SPRING, generate, tileAt } from '../src/game/world/level';
 
 let failures = 0;
 function ok(cond: boolean, msg: string, detail = ''): void {
@@ -278,6 +279,40 @@ console.log('\n== BALANCE SOLVABILITY ==');
     if (p.instance === 'bal-fallback') unsolvable++;
   }
   ok(unsolvable === 0, 'balance generator never falls back', `${unsolvable}/500`);
+}
+
+// ---------------------------------------------------------------------------------
+// 6. Warehouse reachability: every floor's one spring must have a clear launch
+//    corridor to the deck above. A capped spring is a soft-lock, and it looks
+//    exactly like a normal level until a player is standing under it.
+// ---------------------------------------------------------------------------------
+console.log('\n== WAREHOUSE REACHABILITY ==');
+{
+  const FLOOR_H = 5;
+  let levels = 0;
+  let missing = 0;
+  let capped = 0;
+  for (let seed = 1; seed <= 400; seed++) {
+    for (let race = 0; race < 5; race++) {
+      const level = generate(new Rng((seed ^ (race * 0x9e3779b1)) >>> 0), trackAt(race), 0, true);
+      levels++;
+      const rows = [level.h - 1, level.h - 1 - FLOOR_H, level.h - 1 - 2 * FLOOR_H, level.h - 1 - 3 * FLOOR_H];
+      for (let i = 0; i < rows.length - 1; i++) {
+        const standRow = rows[i] as number;
+        const above = rows[i + 1] as number;
+        let sx = -1;
+        for (let x = 1; x < level.w - 1; x++) {
+          if (tileAt(level, x, standRow - 1) === SPRING) { sx = x; break; }
+        }
+        if (sx < 0) { missing++; continue; }
+        for (let ty = above + 1; ty <= standRow - 2; ty++) {
+          if (tileAt(level, sx, ty) === SOLID || tileAt(level, sx + 1, ty) === SOLID) { capped++; break; }
+        }
+      }
+    }
+  }
+  ok(missing === 0, 'every floor has a spring', `${missing} missing in ${levels} levels`);
+  ok(capped === 0, 'no spring launch corridor is blocked', `${capped} capped in ${levels} levels`);
 }
 
 console.log(`\n${failures === 0 ? 'ALL CHECKS PASSED' : `${failures} FAILURE(S)`}\n`);

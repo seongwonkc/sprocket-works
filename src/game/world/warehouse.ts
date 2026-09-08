@@ -83,6 +83,10 @@ export class WarehouseScene implements Scene {
       const c = this.level.crates.find((k) => k.domain === want) ?? this.level.crates[0];
       if (c) this.openCrate(c);
     }
+
+    // The jump deliberately can't reach the next deck — springs do that — and the first hands-on
+    // playtest proved nothing in the scene says so. Repeats each visit until the first part is won.
+    if (p.race === 0 && p.parts.length === 0) this.say('BOUNCE ON A SPRING TO REACH THE UPPER DECKS');
   }
 
   next(): SceneName | null {

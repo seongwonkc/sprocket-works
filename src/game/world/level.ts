@@ -112,6 +112,7 @@ export function generate(rng: Rng, track: Track, tier: number, withGremlins: boo
   const rows = [groundRow, ...floorRows];
 
   // Springs: one per floor, positioned away from that floor's own gap so you don't fall straight back.
+  const springs: { sx: number; standRow: number; above: number }[] = [];
   for (let i = 0; i < rows.length - 1; i++) {
     const standRow = rows[i] as number;
     const above = rows[i + 1] as number;
@@ -123,6 +124,7 @@ export function generate(rng: Rng, track: Track, tier: number, withGremlins: boo
     // Punch a hole in the ceiling directly above so the spring actually delivers you somewhere.
     set(level, sx, above, AIR);
     set(level, sx + 1, above, AIR);
+    springs.push({ sx, standRow, above });
   }
 
   // Scattered ledges — variety, and cover for crates that would otherwise sit in a row.
@@ -134,6 +136,16 @@ export function generate(rng: Rng, track: Track, tier: number, withGremlins: boo
       const ly = base - rng.int(2, 3);
       const len = rng.int(2, 4);
       for (let x = lx; x < lx + len; x++) set(level, x, ly, SOLID);
+    }
+  }
+
+  // Ledges sit 2-3 tiles above a deck — inside a spring's flight path. Each floor has exactly one
+  // spring, so a ledge capping it soft-locks the whole run (11% of seeds, measured). Clear the two
+  // launch columns between the decks; a notched ledge is cosmetic, a blocked spring is a stuck player.
+  for (const s of springs) {
+    for (let ty = s.above + 1; ty <= s.standRow - 2; ty++) {
+      set(level, s.sx, ty, AIR);
+      set(level, s.sx + 1, ty, AIR);
     }
   }
 

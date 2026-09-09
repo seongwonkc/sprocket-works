@@ -124,12 +124,26 @@ export class Input {
       this.prev[a] = now;
     }
 
-    // A tap shorter than one step must still register as both press and release.
-    this.pointer.pressed = this.pendingPointerDown || (this.pointer.down && !this.prevPointerDown);
-    this.pointer.released = this.pendingPointerUp;
+    // A tap shorter than one step must still register as both press and release. Pointer edges LATCH
+    // across the sim steps of a frame and are cleared by endFrame() after the draw: they're consumed
+    // by immediate-mode buttons in draw(), not by the sim, and on a machine rendering at 30fps two
+    // steps run per frame — clearing per step made the second sample() eat every click before any
+    // button hit-test ever saw it.
+    this.pointer.pressed = this.pointer.pressed || this.pendingPointerDown || (this.pointer.down && !this.prevPointerDown);
+    this.pointer.released = this.pointer.released || this.pendingPointerUp;
     this.prevPointerDown = this.pointer.down || this.pendingPointerDown;
     this.pendingPointerDown = false;
     this.pendingPointerUp = false;
+  }
+
+  /**
+   * Call once per rendered frame, after the scene has drawn. Clearing edges here rather than in
+   * sample() also stops one click firing a button on several consecutive draws when a high-refresh
+   * display renders frames with no sim step in them.
+   */
+  endFrame(): void {
+    this.pointer.pressed = false;
+    this.pointer.released = false;
   }
 
   private padHas(a: Action): boolean {

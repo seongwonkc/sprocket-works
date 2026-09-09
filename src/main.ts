@@ -109,6 +109,7 @@ const loop = new Loop(
     const g = screen.ctx;
     current.draw(g, screen.view);
     pad.draw(g, screen.view, padActive());
+    input.endFrame();
   },
 );
 

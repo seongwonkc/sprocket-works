@@ -315,5 +315,29 @@ console.log('\n== WAREHOUSE REACHABILITY ==');
   ok(capped === 0, 'no spring launch corridor is blocked', `${capped} capped in ${levels} levels`);
 }
 
+// The player body (14x26 logical px — mirror warehouse.ts if those change) must never spawn
+// overlapping a solid tile: an embedded body ignores all input, which reads as a dead game.
+{
+  const TILE = 16;
+  let embedded = 0;
+  let levels = 0;
+  for (let seed = 1; seed <= 400; seed++) {
+    for (let race = 0; race < 5; race++) {
+      const l = generate(new Rng((seed ^ (race * 0x9e3779b1)) >>> 0), trackAt(race), 0, true);
+      levels++;
+      const x0 = Math.floor(l.spawnX / TILE);
+      const x1 = Math.floor((l.spawnX + 13) / TILE);
+      const y0 = Math.floor(l.spawnY / TILE);
+      const y1 = Math.floor((l.spawnY + 25) / TILE);
+      outer: for (let ty = y0; ty <= y1; ty++) {
+        for (let tx = x0; tx <= x1; tx++) {
+          if (tileAt(l, tx, ty) === SOLID) { embedded++; break outer; }
+        }
+      }
+    }
+  }
+  ok(embedded === 0, 'spawn is never inside a solid tile', `${embedded} embedded in ${levels} levels`);
+}
+
 console.log(`\n${failures === 0 ? 'ALL CHECKS PASSED' : `${failures} FAILURE(S)`}\n`);
 process.exit(failures === 0 ? 0 : 1);

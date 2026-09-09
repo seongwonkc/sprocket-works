@@ -149,6 +149,15 @@ export function generate(rng: Rng, track: Track, tier: number, withGremlins: boo
     }
   }
 
+  // Spawn safety box: no ledge may stand in the bottom-left start area. One overlapping the spawn
+  // tile embeds the player in steel on frame one (1.9% of seeds, measured); one just above eats the
+  // first jump. Floors and walls live outside these rows, and springs are spared, so only ledges go.
+  for (let tx = 1; tx <= 7; tx++) {
+    for (let ty = h - 5; ty <= h - 2; ty++) {
+      if (tileAt(level, tx, ty) === SOLID) set(level, tx, ty, AIR);
+    }
+  }
+
   // --- crates -------------------------------------------------------------------
   const guaranteed = track.guaranteed.map((id) => dropPool(9).find((p) => p.id === id)).filter(Boolean) as Part[];
   const extras = rng.shuffle(dropPool(tier)).slice(0, Math.max(0, 10 - guaranteed.length));

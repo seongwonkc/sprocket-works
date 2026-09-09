@@ -96,12 +96,12 @@ export function moveBody(l: Level, b: Body, dt: number): void {
       b.y = probe;
       if (wasFalling) {
         b.onGround = true;
-        // Spring check reads the tile under the feet, not the tile we collided with — a spring is a
-        // walkable tile, so the body lands on the solid beneath and the spring is what it's standing on.
-        const feetY = b.y + b.h + 1;
+        // Spring check reads the tile band the feet stand IN — a spring is a walkable tile sitting on
+        // the solid slab, so the body's bottom pixel is inside the spring's row. Probing one pixel
+        // below the feet (the old +1) always landed on the slab and the spring never fired.
         const left = Math.floor((b.x + 1) / TILE);
         const right = Math.floor((b.x + b.w - 2) / TILE);
-        const row = Math.floor(feetY / TILE);
+        const row = Math.floor((b.y + b.h - 1) / TILE);
         for (let tx = left; tx <= right; tx++) {
           if (tileAt(l, tx, row) === SPRING) {
             b.sprung = true;
@@ -115,7 +115,7 @@ export function moveBody(l: Level, b: Body, dt: number): void {
 
   // Standing still on a spring should also launch — otherwise you can park on one.
   if (b.onGround && !b.sprung) {
-    const row = Math.floor((b.y + b.h + 1) / TILE);
+    const row = Math.floor((b.y + b.h - 1) / TILE);
     const left = Math.floor((b.x + 1) / TILE);
     const right = Math.floor((b.x + b.w - 2) / TILE);
     for (let tx = left; tx <= right; tx++) {

@@ -21,6 +21,7 @@ import { magnetsGen } from '../src/game/puzzles/magnets';
 import { forceGen, rangeOf } from '../src/game/puzzles/force';
 import { solve } from '../src/game/puzzles/circuitSolver';
 import { SOLID, SPRING, generate, tileAt } from '../src/game/world/level';
+import { moveBody } from '../src/game/world/physics';
 
 let failures = 0;
 function ok(cond: boolean, msg: string, detail = ''): void {
@@ -337,6 +338,24 @@ console.log('\n== WAREHOUSE REACHABILITY ==');
     }
   }
   ok(embedded === 0, 'spawn is never inside a solid tile', `${embedded} embedded in ${levels} levels`);
+}
+
+// A body standing on a spring tile must launch. The spring is a walkable tile the feet stand IN,
+// on top of the slab — a check that probes one pixel below the feet reads the slab forever, and
+// that exact off-by-one shipped: springs never fired for anyone until the second human playtest.
+{
+  const w = 8, h = 8;
+  const tiles = new Array<number>(w * h).fill(0);
+  for (let x = 0; x < w; x++) tiles[6 * w + x] = 1; // slab row 6 (y 96..112)
+  tiles[5 * w + 3] = 2;                             // spring at (3,5), standing tile on the slab
+  const lvl = { w, h, tiles, crates: [], gremlins: [], spawnX: 0, spawnY: 0, exitTx: 0, exitTy: 0 } as unknown as Parameters<typeof moveBody>[0];
+  const mk = (x: number) => ({ x, y: 96 - 26, w: 14, h: 26, vx: 0, vy: 0, onGround: false, sprung: false });
+  const onSpring = mk(3 * 16 + 1);
+  const onSlab = mk(5 * 16 + 1);
+  for (let i = 0; i < 3; i++) moveBody(lvl, onSpring, 1 / 60);
+  for (let i = 0; i < 3; i++) moveBody(lvl, onSlab, 1 / 60);
+  ok(onSpring.sprung, 'standing on a spring sets sprung');
+  ok(!onSlab.sprung, 'standing beside a spring does not');
 }
 
 console.log(`\n${failures === 0 ? 'ALL CHECKS PASSED' : `${failures} FAILURE(S)`}\n`);

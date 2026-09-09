@@ -68,20 +68,10 @@ class MagnetPuzzle implements Puzzle {
     return this.spec.gaps as boolean[];
   }
 
-  step(input: Input, _dt: number, area: Rect): void {
-    if (this.state !== 'open' || !input.pointer.released) return;
-    const L = this.layout(area);
-    for (let i = 0; i < this.mags.length; i++) {
-      if (hit(this.magRect(L, i), input.pointer.x, input.pointer.y)) {
-        if (this.spec.locked[i]) {
-          play('nope');
-          return;
-        }
-        this.mags[i] = !this.mags[i];
-        play('click');
-        return;
-      }
-    }
+  step(_input: Input, _dt: number, _area: Rect): void {
+    // Taps are handled in draw(), which runs once per rendered frame. step() runs once per fixed sim
+    // step, and a 30fps machine gets two steps per frame — handling the release edge here flipped the
+    // magnet twice per tap, a net no-op that read as a dead puzzle.
   }
 
   check(): void {
@@ -118,6 +108,21 @@ class MagnetPuzzle implements Puzzle {
 
   draw(ctx: CanvasRenderingContext2D, area: Rect, input: Input): void {
     const L = this.layout(area);
+
+    if (this.state === 'open' && input.pointer.released) {
+      for (let i = 0; i < this.mags.length; i++) {
+        if (hit(this.magRect(L, i), input.pointer.x, input.pointer.y)) {
+          if (this.spec.locked[i]) {
+            play('nope');
+          } else {
+            this.mags[i] = !this.mags[i];
+            play('click');
+          }
+          break;
+        }
+      }
+    }
+
     const got = this.gapState();
     const want = this.want();
 
@@ -234,7 +239,10 @@ export const magnetsGen: Generator = {
       if (!solved) break;
       // Force at least one flip on a free magnet.
       const free = [...Array(n).keys()].filter((i) => !locked[i]);
-      if (free.length) mags[rng.pick(free)] = !mags[rng.pick(free)];
+      if (free.length) {
+        const f = rng.pick(free);
+        mags[f] = !mags[f];
+      }
     }
 
     const spec: Spec = goal === 'pattern' ? { goal, gaps, locked } : { goal, locked };

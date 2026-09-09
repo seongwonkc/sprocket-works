@@ -57,6 +57,8 @@ export class WarehouseScene implements Scene {
   private camY = 0;
   private host: PuzzleHost | null = null;
   private activeCrate: Crate | null = null;
+  /** True while airborne from a keyed jump — the only rise the variable-height cut may shorten. */
+  private cutable = false;
   private goTo: SceneName | null = null;
   /** Transient banner, e.g. "gremlin took your Wedge Nose". */
   private toast = '';
@@ -126,16 +128,20 @@ export class WarehouseScene implements Scene {
       this.body.vy = JUMP_V;
       this.coyote = 0;
       this.jumpBuf = 0;
+      this.cutable = true;
       play('jump');
     }
-    // Variable jump height: releasing early cuts the rise.
-    if (!inp.held.jump && this.body.vy < JUMP_V * 0.35) this.body.vy = JUMP_V * 0.35;
+    // Variable jump height: releasing early cuts the rise — but only a rise the jump key started.
+    // A spring launch is not a jump: cutting its -620 to -126 turned every spring into a 6px hop
+    // for anyone not holding the jump key, which is everyone.
+    if (this.cutable && !inp.held.jump && this.body.vy < JUMP_V * 0.35) this.body.vy = JUMP_V * 0.35;
 
     const wasAir = !this.body.onGround;
     moveBody(this.level, this.body, dt);
     if (this.body.sprung) {
       this.body.vy = SPRING_V;
       this.body.onGround = false;
+      this.cutable = false;
       play('spring');
     } else if (wasAir && this.body.onGround) {
       play('land');

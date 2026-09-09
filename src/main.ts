@@ -179,4 +179,9 @@ void loadAssets().then(() => {
   profile,
   telemetry: dump,
   scene: () => currentName,
+  /** Player body position when the current scene has one — lets a headless run assert movement. */
+  pos: (): { x: number; y: number } | null => {
+    const b = (current as unknown as { body?: { x: number; y: number } } | null)?.body;
+    return b ? { x: b.x, y: b.y } : null;
+  },
 };
